@@ -17,13 +17,16 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.BottomAppBarScrollBehavior
 import androidx.compose.material3.Card
+import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -66,15 +69,14 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+
 @Preview
 @Composable
 fun NoteApp(modifier: Modifier = Modifier) {
-
     var noteTitle by remember { mutableStateOf("") }
     var noteBody by remember { mutableStateOf("") }
-    val noteObjectList = remember { mutableListOf<Note>() }
+    val noteObjectList = remember { mutableStateListOf<Note>() }
     var showNoteDialog by remember { mutableStateOf(false) }
-    noteObjectList.add(Note("study", "asdf"))
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -88,38 +90,30 @@ fun NoteApp(modifier: Modifier = Modifier) {
             textAlign = TextAlign.Center,
             modifier = modifier
                 .fillMaxWidth()
+                .padding(20.dp)
         )
 
         HorizontalDivider(thickness = 2.dp)
 
-        NoteDisplay(NoteList = noteObjectList)
-
         Scaffold(
-            bottomBar = {
-                BottomAppBar(modifier = modifier) {
-                    Row(
-                        horizontalArrangement = Arrangement.Center,
-                        modifier = modifier
-                            .fillMaxWidth()
-                    ) {
-                        LargeFloatingActionButton(
-                            onClick = {
-                                noteBody = ""
-                                noteTitle = ""
-                                showNoteDialog = !showNoteDialog
-                            },
-                            shape = CircleShape,
-                            containerColor = Color(115, 194, 251),
-                            modifier = modifier
-                        ) {
-                            Icon(Icons.Rounded.Add, "Floating action button.")
-                        }
-                    }
+            floatingActionButton = {
+                LargeFloatingActionButton(
+                    onClick = {
+                        noteBody = ""
+                        noteTitle = ""
+                        showNoteDialog = !showNoteDialog
+                    },
+                    shape = CircleShape,
+                    containerColor = Color(115, 194, 251),
+                    modifier = modifier
+                ) {
+                    Icon(Icons.Rounded.Add, "Floating action button.")
                 }
             },
-            modifier = modifier
+            floatingActionButtonPosition = FabPosition.Center,
         ) { innerPadding ->
             Spacer(modifier = modifier.padding(innerPadding))
+            NoteDisplay(NoteList = noteObjectList)
         }
 
         if(showNoteDialog) {
@@ -131,8 +125,10 @@ fun NoteApp(modifier: Modifier = Modifier) {
                 onDismissRequest = { showNoteDialog = !showNoteDialog },
                 onConfirmation = {
                     val newNote = Note(noteTitle, noteBody)
-                    noteObjectList.add(newNote)
-                    showNoteDialog = !showNoteDialog
+                    if (newNote.title.isNotEmpty() || newNote.body.isNotEmpty()) {
+                        noteObjectList.add(newNote)
+                    }
+                    showNoteDialog = false
                 }
             )
         }
@@ -146,7 +142,7 @@ fun NoteDisplay(NoteList: List<Note> ,modifier: Modifier = Modifier) {
     var showEditNoteDialog by remember { mutableStateOf(false) }
     var editingNote by remember { mutableStateOf<Note?>(null) }
 
-    Column(modifier = modifier) {
+    Column(modifier = modifier.verticalScroll(rememberScrollState())) {
         for (note in NoteList) {
             Row(
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -173,24 +169,19 @@ fun NoteDisplay(NoteList: List<Note> ,modifier: Modifier = Modifier) {
             }
         }
             if (showEditNoteDialog) {
-                var noteTitle by remember { mutableStateOf(editingNote?.title) }
-                var noteBody by remember { mutableStateOf(editingNote?.body) }
+                var noteTitle = editingNote?.title?:""
+                var noteBody = editingNote?.body?:""
                 NoteDialog(
-                    noteTitle = noteTitle?:"no title",
-                    noteBody = noteBody?:"",
-                    onNoteTitleChange = { noteTitle = it },
-                    onNoteBodyChange = { noteBody = it },
+                    noteTitle = noteTitle,
+                    noteBody = noteBody,
+                    onNoteTitleChange = { editingNote?.title = it },
+                    onNoteBodyChange = { editingNote?.body = it },
                     onDismissRequest = { showEditNoteDialog = false },
-                    onConfirmation = {
-                        editingNote?.title = noteTitle?:""
-                        editingNote?.body = noteBody?:""
-                        showEditNoteDialog = false
-                    }
+                    onConfirmation = { showEditNoteDialog = false }
                 )
         }
     }
 }
-
 @Composable
 fun NoteDialog(
     noteTitle: String,
@@ -215,16 +206,10 @@ fun NoteDialog(
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                TextField(
-                    value = noteTitle,
-                    onValueChange = onNoteTitleChange,
-                    label = { Text("Title") }
-                )
-                TextField(
-                    value = noteBody,
-                    onValueChange = onNoteBodyChange,
-                    label = { Text("Body") }
-                )
+
+                NoteTitleTextField(value = noteTitle, onValueChange = onNoteTitleChange)
+                NoteBodyTextField(value = noteBody, onValueChange = onNoteBodyChange)
+
                 Row(
                     modifier = Modifier
                         .fillMaxWidth(),
@@ -246,6 +231,30 @@ fun NoteDialog(
             }
         }
     }
+}
+
+@Composable
+fun NoteTitleTextField(
+    value: String,
+    onValueChange: (String) -> Unit
+) {
+    TextField(
+        value = value,
+        onValueChange = onValueChange,
+        label = { Text("Title") }
+    )
+}
+
+@Composable
+fun NoteBodyTextField(
+    value: String,
+    onValueChange: (String) -> Unit
+) {
+    TextField(
+        value = value,
+        onValueChange = onValueChange,
+        label = { Text("Body") }
+    )
 }
 
 
