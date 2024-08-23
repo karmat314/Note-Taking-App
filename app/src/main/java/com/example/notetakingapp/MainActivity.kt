@@ -169,13 +169,13 @@ fun NoteDisplay(NoteList: List<Note> ,modifier: Modifier = Modifier) {
             }
         }
             if (showEditNoteDialog) {
-                var noteTitle = editingNote?.title?:""
-                var noteBody = editingNote?.body?:""
+                var noteTitle by remember { mutableStateOf(editingNote?.title?:"") }
+                var noteBody by remember { mutableStateOf(editingNote?.body?:"") }
                 NoteDialog(
                     noteTitle = noteTitle,
                     noteBody = noteBody,
-                    onNoteTitleChange = { editingNote?.title = it },
-                    onNoteBodyChange = { editingNote?.body = it },
+                    onNoteTitleChange = { noteTitle = it },
+                    onNoteBodyChange = { noteBody = it },
                     onDismissRequest = { showEditNoteDialog = false },
                     onConfirmation = { showEditNoteDialog = false }
                 )
