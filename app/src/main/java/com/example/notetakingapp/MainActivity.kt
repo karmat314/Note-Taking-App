@@ -177,7 +177,11 @@ fun NoteDisplay(NoteList: List<Note> ,modifier: Modifier = Modifier) {
                     onNoteTitleChange = { noteTitle = it },
                     onNoteBodyChange = { noteBody = it },
                     onDismissRequest = { showEditNoteDialog = false },
-                    onConfirmation = { showEditNoteDialog = false }
+                    onConfirmation = {
+                        editingNote?.title = noteTitle
+                        editingNote?.body = noteBody
+                        showEditNoteDialog = false
+                    }
                 )
         }
     }
