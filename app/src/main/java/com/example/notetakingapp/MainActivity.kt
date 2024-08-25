@@ -22,6 +22,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.BottomAppBarScrollBehavior
@@ -113,7 +114,12 @@ fun NoteApp(modifier: Modifier = Modifier) {
             floatingActionButtonPosition = FabPosition.Center,
         ) { innerPadding ->
             Spacer(modifier = modifier.padding(innerPadding))
-            NoteDisplay(NoteList = noteObjectList)
+            NoteDisplay(
+                NoteList = noteObjectList,
+                onDeleteNote = { note ->
+                    noteObjectList.remove(note)
+                }
+            )
         }
 
         if(showNoteDialog) {
@@ -138,7 +144,7 @@ fun NoteApp(modifier: Modifier = Modifier) {
 class Note(var title: String, var body: String)
 
 @Composable
-fun NoteDisplay(NoteList: List<Note> ,modifier: Modifier = Modifier) {
+fun NoteDisplay(NoteList: List<Note>, onDeleteNote: (Note) -> Unit, modifier: Modifier = Modifier) {
     var showEditNoteDialog by remember { mutableStateOf(false) }
     var editingNote by remember { mutableStateOf<Note?>(null) }
 
@@ -181,7 +187,12 @@ fun NoteDisplay(NoteList: List<Note> ,modifier: Modifier = Modifier) {
                         editingNote?.title = noteTitle
                         editingNote?.body = noteBody
                         showEditNoteDialog = false
-                    }
+                    },
+                    onDeleteRequest = {
+                        editingNote?.let { onDeleteNote(it) }
+                        showEditNoteDialog = false
+                    },
+                    isBeingEdited = true
                 )
         }
     }
@@ -194,6 +205,8 @@ fun NoteDialog(
     onNoteBodyChange: (String) -> Unit,
     onDismissRequest: () -> Unit,
     onConfirmation: () -> Unit,
+    onDeleteRequest: () -> Unit = {},
+    isBeingEdited: Boolean = false,
 ) {
     Dialog(onDismissRequest = { onDismissRequest() }) {
         // Draw a rectangle shape with rounded corners inside the dialog
@@ -230,6 +243,14 @@ fun NoteDialog(
                         modifier = Modifier.padding(8.dp),
                     ) {
                         Text("Confirm")
+                    }
+                    if(isBeingEdited) {
+                        TextButton(
+                            onClick = { onDeleteRequest() },
+                            modifier = Modifier.padding(8.dp),
+                        ) {
+                            Icon(imageVector = Icons.Filled.Delete, contentDescription = "delete")
+                        }
                     }
                 }
             }
